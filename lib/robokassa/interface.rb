@@ -217,7 +217,7 @@ class Robokassa::Interface
 
   def parse_response_params(params)
     parsed_params = map_params(params, @@notification_params_map)
-    parsed_params[:custom_options] = Hash[args.select do |k,v| o.starts_with?('shp') end.sort.map do|k, v| [k[3, k.size], v] end]
+    parsed_params[:custom_options] = Hash[params.select { |k, v| k.starts_with?('shp') }.sort.map { |k, v| [k[3, k.size], v] }]
     if response_signature(parsed_params)!=parsed_params[:signature].downcase
       raise "Invalid signature"
     end
@@ -269,7 +269,11 @@ class Robokassa::Interface
 
   # build signature string
   def response_signature_string(parsed_params)
-    custom_options_fmt = custom_options.sort.map{|x|"shp#{x[0]}=x[1]]"}.join(":")
+    if parsed_params.has_key?(:custom_options)
+      custom_options_fmt = parsed_params[:custom_options].sort
+        .map{ |x| "shp#{x[0]}=x[1]]" }.join(":")
+    end
+
     "#{parsed_params[:amount]}:#{parsed_params[:invoice_id]}:#{@options[:password2]}#{unless custom_options_fmt.blank? then ":" + custom_options_fmt else "" end}"
   end
 
